@@ -20,7 +20,10 @@ if (!admin.apps.length) {
     }
 
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert({
+        ...serviceAccount,
+        private_key: serviceAccount.private_key?.replace(/\\n/g, '\n'),
+      }),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.firebasestorage.app`,
     });
     console.log('✅ Firebase Admin initialized successfully');
