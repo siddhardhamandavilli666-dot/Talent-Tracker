@@ -7,28 +7,28 @@ if (!admin.apps.length) {
     let serviceAccount;
     const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
+    console.log('🔍 Firebase Debug: Checking FIREBASE_SERVICE_ACCOUNT_KEY...');
+
     if (!key) {
       const serviceAccountPath = path.resolve(__dirname, 'serviceAccountKey.json');
       serviceAccount = require(serviceAccountPath);
-      console.log('📦 Using local serviceAccountKey.json');
+      console.log('📦 Using local serviceAccountKey.json file');
     } else if (key.trim().startsWith('{')) {
       serviceAccount = JSON.parse(key);
-      console.log('📝 Using JSON string from environment variable');
+      console.log('📝 Using raw JSON string from environment variable (Length: ' + key.length + ')');
     } else {
-      // Fallback: Assume it's Base64 encoded if it doesn't start with {
       try {
-        const decoded = Buffer.from(key, 'base64').toString('utf8');
+        const decoded = Buffer.from(key.trim(), 'base64').toString('utf8');
         serviceAccount = JSON.parse(decoded);
-        console.log('🔐 Using Base64 encoded credentials from environment variable');
+        console.log('🔐 Using Base64 encoded credentials (Length: ' + key.length + ')');
       } catch (e) {
-        // If not base64, try to require it as a path
+        console.log('📂 Falling back to file path interpretation (Not JSON or Base64)');
         serviceAccount = require(path.resolve(key));
-        console.log('📂 Using file path from environment variable');
       }
     }
 
-    // Crucial: Fix newline characters in private_key
     if (serviceAccount && serviceAccount.private_key) {
+      // Fix both escaped newlines and literal newlines
       serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
     }
 
@@ -36,12 +36,10 @@ if (!admin.apps.length) {
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : undefined),
     });
-    console.log('✅ Firebase Admin initialized successfully');
+    console.log('✅ Firebase Admin initialized successfully for project:', serviceAccount.project_id);
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error.message);
-    console.error('   Hint: If on Render, ensure FIREBASE_SERVICE_ACCOUNT_KEY is a valid JSON or Base64 string.');
-    // Don't exit immediately so we can see the logs on Render
-    // process.exit(1); 
+    if (error.stack) console.error(error.stack);
   }
 }
 
