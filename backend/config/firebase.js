@@ -6,13 +6,18 @@ if (!admin.apps.length) {
   try {
     let serviceAccount;
     
-    // Attempt 1: Individual Env Vars
-    if (process.env.FIREBASE_PRIVATE_KEY) {
+    // Attempt 1: Full JSON Base64 (The "Nuclear" Option - Most Reliable)
+    if (process.env.FIREBASE_CONFIG_BASE64) {
+      console.log('🧪 Initializing via FIREBASE_CONFIG_BASE64 (Full JSON)');
+      const decoded = Buffer.from(process.env.FIREBASE_CONFIG_BASE64.trim(), 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+    }
+    // Attempt 2: Individual Env Vars
+    else if (process.env.FIREBASE_PRIVATE_KEY) {
       console.log('✅ Found individual Firebase environment variables');
       
       let pk = process.env.FIREBASE_PRIVATE_KEY.trim();
-      // Remove any surrounding quotes
-      pk = pk.replace(/^['"]|['"]$/g, '');
+      pk = pk.replace(/^['"]|['"]$/g, ''); // Remove accidental quotes
       
       // If NOT starting with the standard PEM header, assume it's Base64
       if (!pk.startsWith('-----BEGIN')) {
@@ -24,16 +29,13 @@ if (!admin.apps.length) {
         }
       }
 
-      // Final newline normalization (fixes both \n and accidental literal spaces/newlines)
-      pk = pk.replace(/\\n/g, '\n');
-
       serviceAccount = {
         project_id: (process.env.FIREBASE_PROJECT_ID || '').trim(),
         client_email: (process.env.FIREBASE_CLIENT_EMAIL || '').trim(),
         private_key: pk,
       };
     } 
-    // Attempt 2: JSON from Env Var
+    // Attempt 3: JSON from Env Var (Standard)
     else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
       if (key.startsWith('{')) {
@@ -45,7 +47,7 @@ if (!admin.apps.length) {
         console.log('🔐 Initializing via Base64 string');
       }
     } 
-    // Attempt 3: Local File Fallback
+    // Attempt 4: Local File Fallback
     else {
       const serviceAccountPath = path.resolve(__dirname, 'serviceAccountKey.json');
       try {
@@ -57,9 +59,16 @@ if (!admin.apps.length) {
     }
 
     if (serviceAccount) {
-      // Final normalization for private_key if it came from JSON
+      // Hyper-robust PEM string cleaning for ALL methods
       if (serviceAccount.private_key) {
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        serviceAccount.private_key = serviceAccount.private_key
+          .replace(/\\n/g, '\n')           // Fix escaped newlines
+          .replace(/^['"]|['"]$/g, '')    // Remove accidental quotes
+          .trim();
+          
+        if (!serviceAccount.private_key.includes('\n')) {
+          console.error('⚠️ Critical: Private key has NO newlines. PEM format will likely fail.');
+        }
       }
 
       admin.initializeApp({
