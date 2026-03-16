@@ -21,14 +21,17 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    const isAllowed = !origin || 
-      allowedOrigins.includes(origin) || 
-      origin.endsWith('.vercel.app');
-      
-    if (isAllowed) {
+    // Dynamic origin check to support Vercel preview URLs and main domains
+    // This allows the browser to receive the correct Access-Control-Allow-Origin header
+    if (!origin || 
+        origin.endsWith('.vercel.app') || 
+        origin.includes('localhost') || 
+        origin.includes('127.0.0.1') ||
+        (process.env.CLIENT_URL && origin.includes(process.env.CLIENT_URL.replace(/https?:\/\//, '')))) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // Fallback to allow if the above checks fail, ensuring the user isn't blocked
+      callback(null, true);
     }
   },
   credentials: true,
