@@ -10,13 +10,21 @@ if (!admin.apps.length) {
     if (process.env.FIREBASE_PRIVATE_KEY) {
       console.log('✅ Found individual Firebase environment variables');
       
-      // Hyper-robust PEM string cleaning
       let pk = process.env.FIREBASE_PRIVATE_KEY.trim();
-      // Remove accidental quotes if they exist
-      if ((pk.startsWith('"') && pk.endsWith('"')) || (pk.startsWith("'") && pk.endsWith("'"))) {
-        pk = pk.substring(1, pk.length - 1);
+      // Remove any surrounding quotes
+      pk = pk.replace(/^['"]|['"]$/g, '');
+      
+      // If NOT starting with the standard PEM header, assume it's Base64
+      if (!pk.startsWith('-----BEGIN')) {
+        console.log('🗝️ Decoding Base64 private key');
+        try {
+          pk = Buffer.from(pk, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('❌ Base64 decoding failed');
+        }
       }
-      // Replace literal \n with actual newlines
+
+      // Final newline normalization (fixes both \n and accidental literal spaces/newlines)
       pk = pk.replace(/\\n/g, '\n');
 
       serviceAccount = {
