@@ -20,7 +20,7 @@ const OrgDashboard = () => {
   const [selectedOpp, setSelectedOpp] = useState(null);
   const [applicants, setApplicants] = useState([]);
   const [loadingApplicants, setLoadingApplicants] = useState(false);
-  const [loading, setLoading] = useState(false);
+
 
   const [postForm, setPostForm] = useState({ title: '', description: '', category: '', deadline: '', location: '', eligibility: '' });
   const [posting, setPosting] = useState(false);

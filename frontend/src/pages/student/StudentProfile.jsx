@@ -90,15 +90,7 @@ const StudentProfile = () => {
     }
   };
 
-  const formatDateValue = (dateValue) => {
-    if (!dateValue) return '';
-    try {
-      const d = dateValue?.toDate?.() || new Date(dateValue);
-      return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString();
-    } catch (e) {
-      return 'N/A';
-    }
-  };
+
 
   const getInitials = (name) => name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || '?';
 

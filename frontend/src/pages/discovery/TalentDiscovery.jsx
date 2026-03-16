@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Users } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { userService } from '../../services/userService';
 import TalentCard from '../../components/cards/TalentCard';
 import toast from 'react-hot-toast';
 
-const CATEGORIES = ['All', 'Sports', 'Music', 'Design', 'Leadership', 'Volunteering', 'Technical', 'Academic'];
+
 
 const TalentDiscovery = () => {
   const [students, setStudents] = useState([]);
@@ -22,8 +22,12 @@ const TalentDiscovery = () => {
       if (filters.location) params.location = filters.location;
 
       const data = await userService.searchStudents(params);
-      setStudents([]);
-      setPagination({ page: 1, totalPages: 1, total: 0 });
+      setStudents(data.users || []);
+      setPagination({
+        page: data.page || 1,
+        totalPages: data.totalPages || 1,
+        total: data.total || 0,
+      });
     } catch (err) {
       console.error('Discover page error:', err);
       toast.error(`Failed to load students: ${err.message || 'Unknown error'}`);

@@ -27,7 +27,7 @@ const StudentDashboard = () => {
     try {
       const d = dateValue?.toDate?.() || new Date(dateValue);
       return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString();
-    } catch (e) {
+    } catch {
       return 'N/A';
     }
   };

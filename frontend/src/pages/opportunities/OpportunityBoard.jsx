@@ -30,11 +30,6 @@ const OpportunityBoard = () => {
           o.orgName?.toLowerCase().includes(search.toLowerCase())
         );
       }
-      if (userProfile?.role === 'student') {
-        setOpportunities([]);
-        setPagination({ page: 1, totalPages: 1, total: 0 });
-        return;
-      }
       setOpportunities(opps);
       setPagination({ page: data.page, totalPages: data.totalPages, total: data.total });
     } catch (err) {
@@ -43,7 +38,7 @@ const OpportunityBoard = () => {
     } finally {
       setLoading(false);
     }
-  }, [category, search]);
+  }, [category, search, userProfile]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchOpportunities(1), 300);
