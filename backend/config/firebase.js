@@ -5,41 +5,48 @@ require('dotenv').config();
 if (!admin.apps.length) {
   try {
     let serviceAccount;
-    const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
-    console.log('🔍 Firebase Debug: Checking FIREBASE_SERVICE_ACCOUNT_KEY...');
-
-    if (!key) {
+    
+    // Attempt 1: Individual Env Vars (Most Reliable for Production)
+    if (process.env.FIREBASE_PRIVATE_KEY) {
+      console.log('✅ Found individual Firebase environment variables');
+      serviceAccount = {
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      };
+    } 
+    // Attempt 2: JSON from Env Var
+    else if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+      const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY.trim();
+      if (key.startsWith('{')) {
+        serviceAccount = JSON.parse(key);
+        console.log('📝 Initializing via JSON string');
+      } else {
+        const decoded = Buffer.from(key, 'base64').toString('utf8');
+        serviceAccount = JSON.parse(decoded);
+        console.log('🔐 Initializing via Base64 string');
+      }
+      
+      // Fix private key if using JSON object
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      }
+    } 
+    // Attempt 3: Local File
+    else {
       const serviceAccountPath = path.resolve(__dirname, 'serviceAccountKey.json');
       serviceAccount = require(serviceAccountPath);
-      console.log('📦 Using local serviceAccountKey.json file');
-    } else if (key.trim().startsWith('{')) {
-      serviceAccount = JSON.parse(key);
-      console.log('📝 Using raw JSON string from environment variable (Length: ' + key.length + ')');
-    } else {
-      try {
-        const decoded = Buffer.from(key.trim(), 'base64').toString('utf8');
-        serviceAccount = JSON.parse(decoded);
-        console.log('🔐 Using Base64 encoded credentials (Length: ' + key.length + ')');
-      } catch (e) {
-        console.log('📂 Falling back to file path interpretation (Not JSON or Base64)');
-        serviceAccount = require(path.resolve(key));
-      }
-    }
-
-    if (serviceAccount && serviceAccount.private_key) {
-      // Fix both escaped newlines and literal newlines
-      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+      console.log('📦 Initializing via local file');
     }
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : undefined),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id || serviceAccount.projectId ? `${serviceAccount.project_id || serviceAccount.projectId}.firebasestorage.app` : undefined),
     });
-    console.log('✅ Firebase Admin initialized successfully for project:', serviceAccount.project_id);
+    
+    console.log('🚀 Firebase Admin initialized successfully');
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error.message);
-    if (error.stack) console.error(error.stack);
   }
 }
 
