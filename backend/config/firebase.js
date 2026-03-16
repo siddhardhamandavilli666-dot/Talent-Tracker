@@ -10,9 +10,9 @@ if (!admin.apps.length) {
     if (process.env.FIREBASE_PRIVATE_KEY) {
       console.log('✅ Found individual Firebase environment variables');
       serviceAccount = {
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        project_id: process.env.FIREBASE_PROJECT_ID,
+        client_email: process.env.FIREBASE_CLIENT_EMAIL,
+        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       };
     } 
     // Attempt 2: JSON from Env Var
@@ -26,25 +26,32 @@ if (!admin.apps.length) {
         serviceAccount = JSON.parse(decoded);
         console.log('🔐 Initializing via Base64 string');
       }
-      
-      // Fix private key if using JSON object
+    } 
+    // Attempt 3: Local File (Fallback)
+    else {
+      const serviceAccountPath = path.resolve(__dirname, 'serviceAccountKey.json');
+      try {
+        serviceAccount = require(serviceAccountPath);
+        console.log('📦 Initializing via local file');
+      } catch (e) {
+        console.warn('⚠️ No Firebase service account found (Env vars or local file missing)');
+      }
+    }
+
+    if (serviceAccount) {
+      // Final fix for newlines in any private_key source
       if (serviceAccount.private_key) {
         serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
       }
-    } 
-    // Attempt 3: Local File
-    else {
-      const serviceAccountPath = path.resolve(__dirname, 'serviceAccountKey.json');
-      serviceAccount = require(serviceAccountPath);
-      console.log('📦 Initializing via local file');
-    }
 
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id || serviceAccount.projectId ? `${serviceAccount.project_id || serviceAccount.projectId}.firebasestorage.app` : undefined),
-    });
-    
-    console.log('🚀 Firebase Admin initialized successfully');
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : undefined),
+      });
+      console.log('🚀 Firebase Admin initialized successfully');
+    } else {
+      console.error('❌ Firebase Admin NOT initialized: No credentials found');
+    }
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error.message);
   }
