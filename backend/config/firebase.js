@@ -6,13 +6,23 @@ if (!admin.apps.length) {
   try {
     let serviceAccount;
     
-    // Attempt 1: Individual Env Vars (Most Reliable for Production)
+    // Attempt 1: Individual Env Vars
     if (process.env.FIREBASE_PRIVATE_KEY) {
       console.log('✅ Found individual Firebase environment variables');
+      
+      // Hyper-robust PEM string cleaning
+      let pk = process.env.FIREBASE_PRIVATE_KEY.trim();
+      // Remove accidental quotes if they exist
+      if ((pk.startsWith('"') && pk.endsWith('"')) || (pk.startsWith("'") && pk.endsWith("'"))) {
+        pk = pk.substring(1, pk.length - 1);
+      }
+      // Replace literal \n with actual newlines
+      pk = pk.replace(/\\n/g, '\n');
+
       serviceAccount = {
-        project_id: process.env.FIREBASE_PROJECT_ID,
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        project_id: (process.env.FIREBASE_PROJECT_ID || '').trim(),
+        client_email: (process.env.FIREBASE_CLIENT_EMAIL || '').trim(),
+        private_key: pk,
       };
     } 
     // Attempt 2: JSON from Env Var
@@ -27,19 +37,19 @@ if (!admin.apps.length) {
         console.log('🔐 Initializing via Base64 string');
       }
     } 
-    // Attempt 3: Local File (Fallback)
+    // Attempt 3: Local File Fallback
     else {
       const serviceAccountPath = path.resolve(__dirname, 'serviceAccountKey.json');
       try {
         serviceAccount = require(serviceAccountPath);
         console.log('📦 Initializing via local file');
       } catch (e) {
-        console.warn('⚠️ No Firebase service account found (Env vars or local file missing)');
+        throw new Error('No Firebase credentials found in environment variables or serviceAccountKey.json');
       }
     }
 
     if (serviceAccount) {
-      // Final fix for newlines in any private_key source
+      // Final normalization for private_key if it came from JSON
       if (serviceAccount.private_key) {
         serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
       }
@@ -49,11 +59,10 @@ if (!admin.apps.length) {
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET || (serviceAccount.project_id ? `${serviceAccount.project_id}.firebasestorage.app` : undefined),
       });
       console.log('🚀 Firebase Admin initialized successfully');
-    } else {
-      console.error('❌ Firebase Admin NOT initialized: No credentials found');
     }
   } catch (error) {
     console.error('❌ Firebase Admin initialization error:', error.message);
+    process.exit(1); // Force exit so Render restarts or shows a clear error
   }
 }
 
