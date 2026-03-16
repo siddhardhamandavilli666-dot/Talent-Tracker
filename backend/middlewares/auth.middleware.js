@@ -48,10 +48,18 @@ const verifyToken = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Token verification error:', error.message);
+    console.error('🔓 Token verification failed:', error.message);
+    if (error.code) console.error('   Error Code:', error.code);
+    
     if (error.code === 'auth/id-token-expired') {
       return res.status(401).json({ error: 'Token expired, please login again' });
     }
+    
+    // Check for "aud" (audience) mismatch which happens if project IDs don't match
+    if (error.message.includes('aud') || error.message.includes('audience')) {
+      console.error('🚨 PROJECT MISMATCH: The frontend token does not match the backend project ID.');
+    }
+
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
