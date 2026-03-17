@@ -52,9 +52,9 @@ const Home = () => {
   const { currentUser, userProfile } = useAuth();
 
   const getDashboardPath = () => {
-    if (!userProfile) return '/discover';
+    if (!userProfile) return '/'; // Removed /discover redirect
     const map = { student: '/dashboard/student', organization: '/dashboard/organization', admin: '/dashboard/admin' };
-    return map[userProfile.role] || '/discover';
+    return map[userProfile.role] || '/';
   };
 
   return (
@@ -89,18 +89,18 @@ const Home = () => {
                   <Link to={getDashboardPath()} className="btn btn-primary btn-lg">
                     Manage Recruitment <ArrowRight size={18} />
                   </Link>
-                  <Link to="/discover" className="btn btn-secondary btn-lg">
+                  <button className="btn btn-secondary btn-lg" disabled title="Coming Soon">
                     Discover Talent
-                  </Link>
+                  </button>
                 </>
               ) : (
                 <>
                   <Link to={getDashboardPath()} className="btn btn-primary btn-lg">
                     My Student Profile <ArrowRight size={18} />
                   </Link>
-                  <Link to="/opportunities" className="btn btn-secondary btn-lg">
+                  <button className="btn btn-secondary btn-lg" disabled title="Coming Soon">
                     Browse Opportunities
-                  </Link>
+                  </button>
                 </>
               )
             ) : (
@@ -133,10 +133,10 @@ const Home = () => {
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px' }}>
             {CATEGORIES.map((cat) => (
-              <Link key={cat.name} to={getDashboardPath() === '/discover' ? '/signup' : `/discover?category=${cat.name.toLowerCase()}`} className="category-pill">
+              <div key={cat.name} className="category-pill" style={{ opacity: 0.7, cursor: 'not-allowed' }}>
                 <span style={{ fontSize: '20px' }}>{cat.emoji}</span>
                 <span>{cat.name}</span>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

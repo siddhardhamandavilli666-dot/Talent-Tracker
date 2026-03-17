@@ -81,36 +81,12 @@ const updateUserProfile = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const { skill, college, location, role = 'student', page = 1, limit = 12 } = req.query;
-
-    let ref = db.collection('users').where('role', '==', role);
-
-    const snapshot = await ref.get();
-    let users = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
-
-    if (college) {
-      users = users.filter((u) => u.college === college);
-    }
-    if (location) {
-      users = users.filter((u) => u.location === location);
-    }
-
-    if (skill) {
-      users = users.filter((u) =>
-        u.skills && u.skills.some((s) => s.toLowerCase().includes(skill.toLowerCase()))
-      );
-    }
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const startIdx = (pageNum - 1) * limitNum;
-    const paginated = users.slice(startIdx, startIdx + limitNum);
-
+    // Section emptied as requested
     res.json({
-      users: paginated,
-      total: users.length,
-      page: pageNum,
-      totalPages: Math.ceil(users.length / limitNum),
+      users: [],
+      total: 0,
+      page: 1,
+      totalPages: 0,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

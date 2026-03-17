@@ -123,9 +123,9 @@ const StudentDashboard = () => {
                   <button className="btn btn-primary btn-sm" onClick={() => setTab('upload')}>
                     <Upload size={14} /> Upload Achievement
                   </button>
-                  <Link to="/opportunities" className="btn btn-secondary btn-sm">
+                  <button className="btn btn-secondary btn-sm" disabled title="Feature paused">
                     <Briefcase size={14} /> Browse Opportunities
-                  </Link>
+                  </button>
                   <Link to={`/profile/${currentUser?.uid}`} className="btn btn-secondary btn-sm">
                     <User size={14} /> Edit Profile
                   </Link>
@@ -147,8 +147,7 @@ const StudentDashboard = () => {
                 <div className="empty-state">
                   <Briefcase size={48} />
                   <h3>No applications yet</h3>
-                  <p>Browse the opportunity board and apply to get started!</p>
-                  <Link to="/opportunities" className="btn btn-primary">Browse Opportunities</Link>
+                  <p>The opportunity board is currently unavailable. Please check back later.</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

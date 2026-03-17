@@ -93,8 +93,8 @@ const OpportunityBoard = () => {
         ) : opportunities.length === 0 ? (
           <div className="empty-state">
             <Briefcase size={60} />
-            <h3>No opportunities found</h3>
-            <p>Check back soon or try other filters.</p>
+            <h3>Opportunity Board Empty</h3>
+            <p>New opportunities are currently being curated. Please check back later!</p>
           </div>
         ) : (
           <div className="grid grid-3">

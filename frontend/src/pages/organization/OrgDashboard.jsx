@@ -136,7 +136,7 @@ const OrgDashboard = () => {
                 <h3 style={{ fontWeight: 600, marginBottom: 14 }}>Quick Actions</h3>
                 <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <button className="btn btn-primary" onClick={() => setTab('post')}><Plus size={16} /> Post Opportunity</button>
-                  <Link to="/discover" className="btn btn-secondary"><Search size={16} /> Discover Students</Link>
+                  <button className="btn btn-secondary" disabled title="Feature paused"><Search size={16} /> Discover Students</button>
                 </div>
               </div>
             </div>
@@ -272,8 +272,8 @@ const OrgDashboard = () => {
               <h2 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, marginBottom: 24 }}>Discover Talent</h2>
               <div className="glass-card" style={{ padding: 32, textAlign: 'center' }}>
                 <Users size={48} style={{ color: 'var(--color-primary-light)', marginBottom: 16 }} />
-                <p style={{ color: 'var(--text-secondary)', marginBottom: 20 }}>Search and discover talented students on the Talent Discovery page.</p>
-                <Link to="/discover" className="btn btn-primary btn-lg"><Search size={18} /> Browse All Students</Link>
+                <h3 style={{ marginBottom: 12 }}>No Talent to Discover</h3>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 0 }}>This section is currently empty. Please check back later as new talent joins the platform.</p>
               </div>
             </div>
           )}

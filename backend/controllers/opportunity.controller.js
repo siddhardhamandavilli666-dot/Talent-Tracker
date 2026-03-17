@@ -43,32 +43,12 @@ const createOpportunity = async (req, res) => {
 
 const getOpportunities = async (req, res) => {
   try {
-    const { category, location, status = 'active', page = 1, limit = 10 } = req.query;
-
-    let ref = db.collection('opportunities').where('status', '==', status);
-    if (category) ref = ref.where('category', '==', category);
-    if (location) ref = ref.where('location', '==', location);
-
-    const snapshot = await ref.get();
-
-    let opportunities = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-    opportunities.sort((a, b) => {
-      const aTime = a.createdAt?._seconds ?? 0;
-      const bTime = b.createdAt?._seconds ?? 0;
-      return bTime - aTime;
-    });
-
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const startIdx = (pageNum - 1) * limitNum;
-    const paginated = opportunities.slice(startIdx, startIdx + limitNum);
-
+    // Section emptied as requested
     res.json({
-      opportunities: paginated,
-      total: opportunities.length,
-      page: pageNum,
-      totalPages: Math.ceil(opportunities.length / limitNum) || 1,
+      opportunities: [],
+      total: 0,
+      page: 1,
+      totalPages: 0,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
