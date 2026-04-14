@@ -5,6 +5,8 @@ import {
   signOut,
   onAuthStateChanged,
   updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
 import api from '../services/api';
@@ -42,6 +44,28 @@ export const AuthProvider = ({ children }) => {
     await signOut(auth);
     setUserProfile(null);
     setToken(null);
+  };
+
+  const signInWithGoogle = async (role = 'student', extraData = {}) => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const userCred = await signInWithPopup(auth, provider);
+    const idToken = await userCred.user.getIdToken();
+
+    // Register/update profile on backend (idempotent — safe to call on every sign-in)
+    await api.post(
+      '/auth/google-register',
+      {
+        displayName: userCred.user.displayName || 'Google User',
+        email: userCred.user.email,
+        role,
+        photoURL: userCred.user.photoURL || '',
+        ...extraData,
+      },
+      { headers: { Authorization: `Bearer ${idToken}` } }
+    );
+
+    return userCred;
   };
 
   useEffect(() => {
@@ -95,6 +119,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     login,
     logout,
+    signInWithGoogle,
     refreshProfile,
   };
 

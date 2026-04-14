@@ -6,10 +6,13 @@ const {
   register,
   getMe,
   updateRole,
+  googleRegister,
   registerValidators,
 } = require('../controllers/auth.controller');
 
 router.post('/register', registerValidators, validate, register);
+
+router.post('/google-register', googleRegister);
 
 router.get('/me', verifyToken, getMe);
 

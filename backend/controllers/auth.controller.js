@@ -94,4 +94,65 @@ const updateRole = async (req, res) => {
   }
 };
 
-module.exports = { register, getMe, updateRole, registerValidators };
+// ── Google OAuth Registration (idempotent) ──────────────────────
+const googleRegister = async (req, res) => {
+  try {
+    const { displayName, email, role, photoURL } = req.body;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const uid = decodedToken.uid;
+
+    // Check if user profile already exists – if so, just return it
+    const existingDoc = await db.collection('users').doc(uid).get();
+    if (existingDoc.exists) {
+      return res.status(200).json({
+        message: 'User already registered',
+        uid,
+        role: existingDoc.data().role,
+      });
+    }
+
+    // Validate role
+    const validRole = ['student', 'organization'].includes(role) ? role : 'student';
+
+    // Set custom claims for role-based access
+    await admin.auth().setCustomUserClaims(uid, { role: validRole });
+
+    const userProfile = {
+      uid,
+      email: email || decodedToken.email || '',
+      displayName: displayName || decodedToken.name || 'Google User',
+      role: validRole,
+      authProvider: 'google',
+      college: '',
+      location: '',
+      bio: '',
+      skills: [],
+      portfolioLinks: { github: '', linkedin: '', website: '' },
+      photoURL: photoURL || decodedToken.picture || '',
+      verified: true, // Google accounts are pre-verified
+      achievementsCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    await db.collection('users').doc(uid).set(userProfile);
+
+    res.status(201).json({
+      message: 'Google user profile created successfully',
+      uid,
+      role: validRole,
+    });
+  } catch (error) {
+    console.error('Google registration error:', error);
+    res.status(500).json({ error: error.message || 'Google registration failed' });
+  }
+};
+
+module.exports = { register, getMe, updateRole, googleRegister, registerValidators };
