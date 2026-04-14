@@ -10,10 +10,11 @@ async function manageTalents() {
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const isStudent = data.role === 'student';
-      const isNarasimha = data.displayName?.toLowerCase().includes('narasimha');
+      const isTargetNarasimha = data.displayName === 'Narasimha K';
+      const isNewTalent = data.uid?.startsWith('talent_');
 
-      // Remove students that are NOT Narasimha
-      if (isStudent && !isNarasimha) {
+      // Remove students that are NOT the target Narasimha and NOT the new high-quality talents
+      if (isStudent && !isTargetNarasimha && !isNewTalent) {
         await doc.ref.delete();
         deleteCount++;
       }
