@@ -43,12 +43,34 @@ const createOpportunity = async (req, res) => {
 
 const getOpportunities = async (req, res) => {
   try {
-    // Section emptied as requested
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const status = req.query.status;
+    const category = req.query.category;
+
+    let queryRef = db.collection('opportunities');
+    if (status) queryRef = queryRef.where('status', '==', status);
+    if (category) queryRef = queryRef.where('category', '==', category);
+
+    const snapshot = await queryRef.get();
+    let opportunities = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    opportunities.sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || a.createdAt || 0;
+      const bTime = b.createdAt?.toDate?.() || b.createdAt || 0;
+      return new Date(bTime) - new Date(aTime);
+    });
+
+    const total = opportunities.length;
+    const totalPages = Math.ceil(total / limit) || 1;
+    const startIdx = (page - 1) * limit;
+    const paginatedOpps = opportunities.slice(startIdx, startIdx + limit);
+
     res.json({
-      opportunities: [],
-      total: 0,
-      page: 1,
-      totalPages: 0,
+      opportunities: paginatedOpps,
+      total,
+      page,
+      totalPages,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -11,9 +11,9 @@ const {
   opportunityValidators,
 } = require('../controllers/opportunity.controller');
 
-router.get('/', verifyToken, getOpportunities);
+router.get('/', optionalAuth, getOpportunities);
 
-router.get('/:id', verifyToken, getOpportunity);
+router.get('/:id', optionalAuth, getOpportunity);
 
 router.post('/', verifyToken, requireRole('organization'), opportunityValidators, validate, createOpportunity);
 

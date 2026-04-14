@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit2, Github, Linkedin, Globe, MapPin, GraduationCap, CheckCircle, Save, X } from 'lucide-react';
+import { Edit2, Github, Linkedin, Globe, MapPin, GraduationCap, CheckCircle, Save, X, Camera } from 'lucide-react';
 import { userService } from '../../services/userService';
 import { achievementService } from '../../services/achievementService';
 import AchievementGallery from '../../components/gallery/AchievementGallery';
@@ -19,6 +19,8 @@ const StudentProfile = () => {
   const [editForm, setEditForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [skillInput, setSkillInput] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   const isOwner = currentUser?.uid === id;
 
@@ -34,8 +36,7 @@ const StudentProfile = () => {
           college: profileData.college || '',
           location: profileData.location || '',
           bio: profileData.bio || '',
-          skills: profileData.skills || [],
-          portfolioLinks: profileData.portfolioLinks || { github: '', linkedin: '', website: '' },
+          skills: profileData.skills || []
         });
       })
       .catch((err) => {
@@ -55,10 +56,23 @@ const StudentProfile = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await userService.updateProfile(id, editForm);
+      let updatedPhotoURL = profile.photoURL;
+      
+      if (photoFile) {
+        const uploadRes = await userService.uploadPhoto(id, photoFile);
+        updatedPhotoURL = uploadRes.photoURL;
+      }
+      
+      const payload = { ...editForm };
+      if (updatedPhotoURL) {
+        payload.photoURL = updatedPhotoURL;
+      }
+
+      const updated = await userService.updateProfile(id, payload);
       setProfile(updated);
       await refreshProfile();
       setEditing(false);
+      setPhotoFile(null);
       toast.success('Profile updated!');
     } catch (err) {
       toast.error(err.message);
@@ -111,11 +125,40 @@ const StudentProfile = () => {
       <div className="container" style={{ maxWidth: 900 }}>
         <div className="glass-card" style={{ padding: 32, marginBottom: 24 }}>
           <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <div className="avatar avatar-xl" style={{ background: 'var(--gradient-primary)', fontSize: 40, flexShrink: 0 }}>
-              {profile.photoURL ? (
-                <img src={profile.photoURL} alt={profile.displayName} className="avatar avatar-xl" />
-              ) : getInitials(profile.displayName)}
-            </div>
+            {editing ? (
+              <>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={(e) => setPhotoFile(e.target.files[0])}
+                  accept="image/*"
+                />
+                <div 
+                  className="avatar avatar-xl" 
+                  style={{ background: 'var(--gradient-primary)', fontSize: 40, flexShrink: 0, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Change Photo"
+                >
+                  {photoFile ? (
+                    <img src={URL.createObjectURL(photoFile)} alt="preview" className="avatar avatar-xl" style={{ opacity: 0.5, objectFit: 'cover' }} />
+                  ) : profile.photoURL ? (
+                    <img src={profile.photoURL} alt={profile.displayName} className="avatar avatar-xl" style={{ opacity: 0.5, objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ opacity: 0.5 }}>{getInitials(profile.displayName)}</div>
+                  )}
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Camera size={24} color="white" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="avatar avatar-xl" style={{ background: 'var(--gradient-primary)', fontSize: 40, flexShrink: 0 }}>
+                {profile.photoURL ? (
+                  <img src={profile.photoURL} alt={profile.displayName} className="avatar avatar-xl" style={{ objectFit: 'cover' }} />
+                ) : getInitials(profile.displayName)}
+              </div>
+            )}
 
             <div style={{ flex: 1, minWidth: 220 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -153,21 +196,7 @@ const StudentProfile = () => {
                 profile.bio && <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>{profile.bio}</p>
               )}
 
-              {editing ? (
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
-                  {['github', 'linkedin', 'website'].map((key) => (
-                    <input key={key} className="form-input" placeholder={`${key} URL`} value={editForm.portfolioLinks[key]}
-                      onChange={(e) => setEditForm({ ...editForm, portfolioLinks: { ...editForm.portfolioLinks, [key]: e.target.value } })}
-                      style={{ maxWidth: 220 }} />
-                  ))}
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
-                  {profile.portfolioLinks?.github && <a href={profile.portfolioLinks.github} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Github size={14} />GitHub</a>}
-                  {profile.portfolioLinks?.linkedin && <a href={profile.portfolioLinks.linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Linkedin size={14} />LinkedIn</a>}
-                  {profile.portfolioLinks?.website && <a href={profile.portfolioLinks.website} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Globe size={14} />Website</a>}
-                </div>
-              )}
+              
             </div>
 
             {isOwner ? (

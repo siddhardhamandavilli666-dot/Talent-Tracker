@@ -6,7 +6,7 @@ import OpportunityCard from '../../components/cards/OpportunityCard';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
-const CATEGORIES = ['All', 'Internship', 'Competition', 'Scholarship', 'Volunteering', 'Job'];
+const CATEGORIES = ['All', 'Competition', 'Volunteering', 'Job'];
 
 const OpportunityBoard = () => {
   const { currentUser, userProfile } = useAuth();

@@ -41,7 +41,7 @@ const applyToOpportunity = async (req, res) => {
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, req.file.buffer);
       
-      const baseUrl = process.env.API_URL || 'http://localhost:5000';
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
       resumeURL = `${baseUrl}/uploads/resumes/${fileName}`;
     }
 

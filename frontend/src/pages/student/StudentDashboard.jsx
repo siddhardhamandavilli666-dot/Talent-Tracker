@@ -123,9 +123,9 @@ const StudentDashboard = () => {
                   <button className="btn btn-primary btn-sm" onClick={() => setTab('upload')}>
                     <Upload size={14} /> Upload Achievement
                   </button>
-                  <button className="btn btn-secondary btn-sm" disabled title="Feature paused">
+                  <Link to="/opportunities" className="btn btn-secondary btn-sm">
                     <Briefcase size={14} /> Browse Opportunities
-                  </button>
+                  </Link>
                   <Link to={`/profile/${currentUser?.uid}`} className="btn btn-secondary btn-sm">
                     <User size={14} /> Edit Profile
                   </Link>

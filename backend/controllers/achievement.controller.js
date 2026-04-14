@@ -31,7 +31,7 @@ const uploadAchievement = async (req, res) => {
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, req.file.buffer);
 
-      const baseUrl = process.env.API_URL || 'http://localhost:5000';
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
       mediaURL = `${baseUrl}/uploads/achievements/${fileName}`;
       mediaType = req.file.mimetype.startsWith('image')
         ? 'image'
