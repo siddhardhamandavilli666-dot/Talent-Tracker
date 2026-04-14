@@ -86,15 +86,29 @@ const getUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 9;
-    const role = req.query.role;
+    const { role, location, skill } = req.query;
 
     let queryRef = db.collection('users');
+    
     if (role) {
       queryRef = queryRef.where('role', '==', role);
+    }
+    
+    if (location) {
+      queryRef = queryRef.where('location', '==', location);
     }
 
     const snapshot = await queryRef.get();
     let users = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+
+    // In-memory search for skills/name (Firestore doesn't support easy multi-field partial search without specific setup)
+    if (skill) {
+      const searchLower = skill.toLowerCase();
+      users = users.filter(user => 
+        user.displayName?.toLowerCase().includes(searchLower) ||
+        user.skills?.some(s => s.toLowerCase().includes(searchLower))
+      );
+    }
 
     // Sort in-memory to prevent composite index requirements
     users.sort((a, b) => {

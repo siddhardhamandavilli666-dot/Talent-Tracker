@@ -10,15 +10,14 @@ const TalentDiscovery = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ skill: '', college: '', location: '', category: '' });
+  const [filters, setFilters] = useState({ location: '', category: '' });
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
 
   const fetchStudents = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const params = { page, limit: 12 };
+      const params = { page, limit: 12, role: 'student' };
       if (search) params.skill = search;
-      if (filters.college) params.college = filters.college;
       if (filters.location) params.location = filters.location;
 
       const data = await userService.searchStudents(params);
@@ -61,16 +60,15 @@ const TalentDiscovery = () => {
         </div>
 
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
-          <input
-            className="form-input" placeholder="College..."
-            value={filters.college} onChange={(e) => setFilters({ ...filters, college: e.target.value })}
-            style={{ maxWidth: 200 }}
-          />
-          <input
-            className="form-input" placeholder="Location..."
-            value={filters.location} onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-            style={{ maxWidth: 200 }}
-          />
+          <div className="search-bar" style={{ maxWidth: 300, flex: 1 }}>
+            <input
+              className="form-input" 
+              placeholder="Filter by Location..."
+              value={filters.location} 
+              onChange={(e) => setFilters({ ...filters, location: e.target.value })}
+              style={{ border: 'none', background: 'transparent' }}
+            />
+          </div>
         </div>
 
         <div style={{ marginBottom: '16px', color: 'var(--text-muted)', fontSize: 'var(--font-size-sm)' }}>
